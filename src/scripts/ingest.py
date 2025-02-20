@@ -1,117 +1,49 @@
-import os
 import pandas as pd
-from scipy import stats
-from ..services.zilliz import insertEmbeddings
-from sklearn.preprocessing import OneHotEncoder
 
-# Read in data
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb.csv")
-sbdf = pd.read_csv(DATA_PATH)
+from ..services.zilliz import insert_embeddings
+from ..services.df_util import read_df_from_csv, write_df_to_csv, gen_train_val_split, clean_df, gen_vector_embeddings
 
-# Clean data
-sbdf_clean = sbdf
+# Read initial csv data
+sbdf = read_df_from_csv("sb.csv")
 
-# Null count summed across all columns
-numNulls = sbdf_clean.isnull().sum().sum()
-if numNulls > 0:
-    sbdf_clean = sbdf_clean.dropna()
+# Generate cleaned df
+sbdf_clean = clean_df(sbdf)
 
-# Dup-row count summed
-numDups = sbdf_clean.duplicated().sum()
-if numDups > 0:
-    sbdf_clean = sbdf_clean.drop_duplicates()
+# Write cleaned df to local dir
+write_df_to_csv(sbdf_clean, "sb_clean.csv")
 
-# Finding and removing outliers (remove row if an attribute in any numeric column is an outlier)
-valid_rows = pd.Series(True, index=sbdf_clean.index)
-for col_name, col_data in sbdf_clean.select_dtypes(include=["int64", "float64"]).items():
-    z_scores = stats.zscore(col_data)
-    outliers = abs(z_scores) > 3
-    
-    if outliers.any():
-        valid_rows = valid_rows & ~outliers # essentially a boolean expression
+# Generate a df filled with vector embeddings (all numerical data, normalized where needed)
+df_ve = gen_vector_embeddings(sbdf_clean)
 
-sbdf_clean = sbdf_clean[valid_rows].reset_index(drop=True)
-
-CLEANED_DF_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb_clean.csv")
-sbdf_clean.to_csv(CLEANED_DF_PATH, index=False)
-
-# Generate vector embeddings
-
-# Milvus article on embeddings https://medium.com/vector-database/how-to-get-the-right-vector-embeddings-83295ced7f35
-# Milvus article on vector similariy search https://zilliz.com/learn/vector-similarity-search
-
-# For now:
-#   Drop id col
-#   Normalizing all continuous numeric columns
-#   Converting all two-category columns to be 0-or-1
-#   Converting all categorical columns to be one-hot-encoded
-# This should give us a "vector embedding", albeit a very simple one
-
-normalization_cols = [
-    "Annual_Revenue",
-    "Debt_To_Income_Ratio",
-    "Credit_Score",
-    "Loan_Amount_Requested",
-    "Loan_Term_Months",
-    "Interest_Rate",
-    "Past_Loan_Defaults",
-]
-
-two_category_cols = {
-    "Approval_Status": {
-        "Approved": 1,
-        "Denied": 0
-    }
-}
-
-one_hot_cols = [
-    "Business_Category"
-]
-
-# sbdf_ve = sbdf_clean.drop("Loan_ID", axis=1)
-# sbdf_ve = sbdf_ve.drop("Approval_Status", axis=1)
-sbdf_ve = sbdf_clean
-for col_name in sbdf_ve.columns:
-    
-    if col_name in normalization_cols:
-        sbdf_ve[col_name] = stats.zscore(sbdf_ve[col_name])
-    
-    if col_name in two_category_cols.keys():
-        sbdf_ve[col_name] = sbdf_ve[col_name].map(
-            two_category_cols[col_name]
-        )
-
-    if col_name in one_hot_cols:
-        col_encoder = OneHotEncoder(sparse_output=False)
-        col_encoded = col_encoder.fit_transform(sbdf_ve[[col_name]])
-        df_encoded = pd.DataFrame(
-            col_encoded,
-            columns=col_encoder.get_feature_names_out([col_name])
-        )
-        sbdf_ve = pd.concat([sbdf_ve, df_encoded], axis=1)
-        sbdf_ve = sbdf_ve.drop(col_name, axis=1)
+# Separate prepared dataframe out into training and validation sets (will be helpful for sim search and building model)
+train_ve, val_ve = gen_train_val_split(df_ve)
 
 # Write embeddings in Zilliz, only include relevant data
-insertion_ids = insertEmbeddings(
-    sbdf_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
-)
-
-# Add insertion_ids to sbdf_ve csv
+# Adding insertion_ids to dataframes
 # Doing this because we don't want to store approval status in zilliz,
 # but we will need to know which vector embeddings represent approvals or denials
 # in order to train a model to make predictions
-if len(insertion_ids) != sbdf_ve.shape[0]:
-    raise Exception(f"Mismatch - number of zilliz insert ids and sbdf_ve shape {len(insertion_ids)}, {sbdf_ve.shape[0]}")
-else:
-    sbdf_ve = pd.concat(
-        [sbdf_ve, pd.Series(insertion_ids, name="zilliz_insertion_id")],
-        axis=1
-    )
+train_insertion_ids = insert_embeddings(
+    "sbl_train",
+    train_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
+)
 
-    VE_DF_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb_ve.csv")
-    sbdf_ve.to_csv(VE_DF_PATH, index=False)
+train_ve = pd.concat(
+    [train_ve, pd.Series(train_insertion_ids, name="zilliz_insertion_id")],
+    axis=1
+)
 
+write_df_to_csv(train_ve, "train_ve.csv")
 
+# Same with validation set
+val_insertion_ids = insert_embeddings(
+    "sbl_val",
+    val_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
+)
 
+val_ve = pd.concat(
+    [val_ve, pd.Series(val_insertion_ids, name="zilliz_insertion_id")],
+    axis=1
+)
 
+write_df_to_csv(val_ve, "val_ve.csv")
