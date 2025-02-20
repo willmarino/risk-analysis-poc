@@ -10,7 +10,7 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 * I have gitignored the sample data from this repo, so you will need to add it in
   * Run ``` mkdir csv_data ```
   * Drop in the dataframe as ``` csv_data/sb.csv ```
-* Run the data ingestion script with ``` python3 scripts/ingest.py ```
+* Run the data ingestion script with ``` python3 -m src.scripts.ingest ```
   * This will clean the dataframe and (soon) turn the data into vector embeddings
 
 ### ingest.py
@@ -21,4 +21,4 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
     * Binary encoding for two-choice categorical variables
     * One-hot encoding for categorical variables
     * Z-score normalization for continuous vars
-* I create intermediate dataframes in the `csv_data` folder as a way to check my work
+* Stores the vector embeddings on zilliz cloud

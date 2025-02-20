@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 from scipy import stats
+from ..services.zilliz import insertEmbeddings
 from sklearn.preprocessing import OneHotEncoder
 
 # Read in data
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(SCRIPT_DIR, "..", "csv_data", "sb.csv")
+DATA_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb.csv")
 sbdf = pd.read_csv(DATA_PATH)
 
 # Clean data
@@ -32,7 +33,7 @@ for col_name, col_data in sbdf_clean.select_dtypes(include=["int64", "float64"])
 
 sbdf_clean = sbdf_clean[valid_rows].reset_index(drop=True)
 
-CLEANED_DF_PATH = os.path.join(SCRIPT_DIR, "..", "csv_data", "sb_clean.csv")
+CLEANED_DF_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb_clean.csv")
 sbdf_clean.to_csv(CLEANED_DF_PATH, index=False)
 
 # Generate vector embeddings
@@ -68,7 +69,9 @@ one_hot_cols = [
     "Business_Category"
 ]
 
-sbdf_ve = sbdf_clean.drop("Loan_ID", axis=1)
+# sbdf_ve = sbdf_clean.drop("Loan_ID", axis=1)
+# sbdf_ve = sbdf_ve.drop("Approval_Status", axis=1)
+sbdf_ve = sbdf_clean
 for col_name in sbdf_ve.columns:
     
     if col_name in normalization_cols:
@@ -89,6 +92,26 @@ for col_name in sbdf_ve.columns:
         sbdf_ve = pd.concat([sbdf_ve, df_encoded], axis=1)
         sbdf_ve = sbdf_ve.drop(col_name, axis=1)
 
+# Write embeddings in Zilliz, only include relevant data
+insertion_ids = insertEmbeddings(
+    sbdf_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
+)
 
-VE_DF_PATH = os.path.join(SCRIPT_DIR, "..", "csv_data", "sb_ve.csv")
-sbdf_ve.to_csv(VE_DF_PATH, index=False)
+# Add insertion_ids to sbdf_ve csv
+# Doing this because we don't want to store approval status in zilliz,
+# but we will need to know which vector embeddings represent approvals or denials
+# in order to train a model to make predictions
+if len(insertion_ids) != sbdf_ve.shape[0]:
+    raise Exception(f"Mismatch - number of zilliz insert ids and sbdf_ve shape {len(insertion_ids)}, {sbdf_ve.shape[0]}")
+else:
+    sbdf_ve = pd.concat(
+        [sbdf_ve, pd.Series(insertion_ids, name="zilliz_insertion_id")],
+        axis=1
+    )
+
+    VE_DF_PATH = os.path.join(SCRIPT_DIR, "..", "..", "csv_data", "sb_ve.csv")
+    sbdf_ve.to_csv(VE_DF_PATH, index=False)
+
+
+
+
