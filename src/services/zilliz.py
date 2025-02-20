@@ -46,13 +46,31 @@ def insert_embeddings(col_name, embeddings):
     return insertion_ids
 
 
+def fetch_vectors(col_name, offset, limit):
+    url = f"{get_base_url()}/query"
+
+    payload = {
+        "collectionName": col_name,
+        "outputFields": ["vector"],
+        "offset": offset,
+        "limit": limit
+    }
+
+    response = requests.post(
+        url,
+        data=json.dumps(payload),
+        headers=get_headers()
+    )
+
+    return response.json()["data"]
+
+
 def single_vector_search(col_name, v_e):
     url = f"{get_base_url()}/search"
 
     payload = {
         "collectionName": col_name,
         "data": [v_e],
-        "limit": 2,
         "outputFields": [
             "*"
         ]
@@ -64,4 +82,4 @@ def single_vector_search(col_name, v_e):
         headers=get_headers()
     )
 
-    return response.json()
+    return response.json()["data"]

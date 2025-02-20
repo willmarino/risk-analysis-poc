@@ -29,3 +29,4 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 * For the similarity search / risk comparison the base implementation is simple enough, the more ambiguous part was figuring out how to start separating which data from the sample would be used for which purposes.
 * I decided to cut 20% out of the initial sample for use in the vector search functionality in order to provide a proper proof of concept
 * I am also figuring that I can use this 20% as my validation set when training my model in the next step
+* This file grabs a vector from the validation data, and runs a similarity search against the training data, sorts the response, grabs the most-similar vector, and logs the time it took to run the query and sort functions

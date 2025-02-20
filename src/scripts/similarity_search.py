@@ -1,25 +1,28 @@
-from ..services.zilliz import single_vector_search
+import time
+from ..services.zilliz import fetch_vectors, single_vector_search
 
 # Zilliz docs were super helpful
 # https://docs.zilliz.com/docs/quick-start#similarity-search
 
-# Just took the VE which was autofilled for this route from Zilliz's API playground
-dummy_vector_embedding = [
-    0.26651621043836027,
-    0.963506742923351,
-    0.06656141746585242,
-    0.0791575852228148,
-    0.2470072780022039,
-    0.09536912435302902,
-    0.6287248766271651,
-    0.3517254453998986,
-    0.7332961863276148,
-    0.0819152543771533,
-    0.5999939697072323,
-    0.027695362670982604,
-    0.5887723007321608
-]
+# Pulling some vectors from the validation set, and using them as queries to search the train set
+# This is how I am simulating a "new applicant"
+NUM_RUNS = 5
+for idx in range(0, NUM_RUNS):
 
-response = single_vector_search("sbl_train", dummy_vector_embedding)
+    # Fetch sample vector
+    validation_data = fetch_vectors("sbl_val", idx, 1)
+    validation_vector = validation_data[0]["vector"]
 
-print(response)
+    start_time = time.time()
+
+    # Run single vector similarity search
+    search_response = single_vector_search("sbl_train", validation_vector)
+
+    # Sort response, grab min value
+    search_response_sorted = sorted(search_response, key=lambda x: x["distance"])
+    closest_vector = search_response_sorted[0]
+
+    end_time = time.time()
+    time_diff = end_time - start_time
+
+    print(f"Found closest vector in {time_diff:.2f} seconds")
