@@ -1,0 +1,4 @@
+.env.dev
+myenv/
+csv_data/
+*__pycache__*
