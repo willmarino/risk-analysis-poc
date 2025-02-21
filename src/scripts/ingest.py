@@ -25,7 +25,8 @@ train_ve, val_ve = gen_train_val_split(df_ve)
 # in order to train a model to make predictions
 train_insertion_ids = insert_embeddings(
     "sbl_train",
-    train_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
+    train_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist(),
+    train_ve["Approval_Status"].values.tolist()
 )
 
 train_ve = pd.concat(
@@ -38,7 +39,8 @@ write_df_to_csv(train_ve, "train_ve.csv")
 # Same with validation set
 val_insertion_ids = insert_embeddings(
     "sbl_val",
-    val_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist()
+    val_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist(),
+    val_ve["Approval_Status"].values.tolist()
 )
 
 val_ve = pd.concat(

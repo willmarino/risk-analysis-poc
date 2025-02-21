@@ -24,12 +24,12 @@ def get_headers():
         "Authorization": f"Bearer {os.getenv("ZILLIZ_BEARER_TOKEN")}",
     }
 
-def insert_embeddings(col_name, embeddings):
+def insert_embeddings(col_name, embeddings, status):
     url = f"{get_base_url()}/insert"
     
     formatted_embeddings = []
-    for e in embeddings:
-        formatted_embeddings.append({"vector": e})
+    for i in range(len(embeddings)):
+        formatted_embeddings.append({"vector": embeddings[i], "status": status[i]})
     
     payload = {
         "collectionName": col_name,
@@ -51,7 +51,7 @@ def fetch_vectors(col_name, offset, limit):
 
     payload = {
         "collectionName": col_name,
-        "outputFields": ["vector"],
+        "outputFields": ["vector", "status"],
         "offset": offset,
         "limit": limit
     }
