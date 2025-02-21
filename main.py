@@ -5,7 +5,7 @@ from typing import List
 
 from src.services.zilliz import single_vector_search
 from src.services.open_ai import generate_explanation
-from src.models.random_forest import rf
+from services.random_forest import rf
 
 
 app = FastAPI()

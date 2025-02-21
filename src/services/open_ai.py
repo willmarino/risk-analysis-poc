@@ -1,27 +1,15 @@
-# import pandas as pd
-# from sklearn.inspection import permutation_importance
 from openai import OpenAI
 
-from ..models.random_forest import importances, perm_importances
+from .df_util import read_df_from_csv
 
 client = OpenAI()
 
 def generate_explanation(vector_input, output):
-    feature_names = [
-        "Annual_Revenue",
-        "Debt_To_Income_Ratio", 
-        "Credit_Score",
-        "Loan_Amount_Requested",
-        "Loan_Term_Months",
-        "Interest_Rate",
-        "Past_Loan_Defaults",
-        "Business_Category_Construction",
-        "Business_Category_Food & Beverage",
-        "Business_Category_Healthcare",
-        "Business_Category_Manufacturing",
-        "Business_Category_Retail",
-        "Business_Category_Technology"
-    ]
+    print(f"Generating data explanation via OpenAI...")
+    feature_importance_df = read_df_from_csv("feature_importance.csv")
+    perm_feature_importance_df = read_df_from_csv("perm_feature_importance.csv")
+    
+    feature_names = read_df_from_csv("sb_ve.csv").drop(columns=["Loan_ID", "Approval_Status", "zilliz_insertion_id"]).columns.tolist()
 
     completion = client.chat.completions.create(
         model="gpt-4o",
@@ -40,9 +28,9 @@ def generate_explanation(vector_input, output):
                     The importance of each of these variables in predicting the outcome {output}
                     is given by these two analyses of feature importance.
                     Non-permutated feature importances:
-                    {importances.to_markdown(index=False)}
+                    {feature_importance_df.to_markdown(index=False)}
                     Permutated feature importances:
-                    {perm_importances.to_markdown(index=False)}
+                    {perm_feature_importance_df.to_markdown(index=False)}
 
                     Given all of this data, can you explain to me why certain
                     variables in the vector embedding could have caused the outcome {output}?

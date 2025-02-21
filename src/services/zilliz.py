@@ -25,6 +25,7 @@ def get_headers():
     }
 
 def insert_embeddings(col_name, embeddings, status):
+    print(f"Inserting vector embeddings into zilliz: {col_name}...")
     url = f"{get_base_url()}/insert"
     
     formatted_embeddings = []
@@ -47,6 +48,7 @@ def insert_embeddings(col_name, embeddings, status):
 
 
 def fetch_vectors(col_name, offset, limit):
+    print(f"Fetching vector embeddings from zilliz: {col_name}...")
     url = f"{get_base_url()}/query"
 
     payload = {
@@ -66,6 +68,7 @@ def fetch_vectors(col_name, offset, limit):
 
 
 def single_vector_search(col_name, v_e):
+    print(f"Running vector search on zilliz: {col_name}...")
     url = f"{get_base_url()}/search"
 
     payload = {

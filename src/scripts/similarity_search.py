@@ -6,6 +6,8 @@ from ..services.zilliz import fetch_vectors, single_vector_search
 
 # Pulling some vectors from the validation set, and using them as queries to search the train set
 # This is how I am simulating a "new applicant"
+print("Running similarity search for 5 vectors...")
+
 NUM_RUNS = 5
 for idx in range(0, NUM_RUNS):
 

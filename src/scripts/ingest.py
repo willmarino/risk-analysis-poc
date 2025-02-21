@@ -9,7 +9,7 @@ sbdf = read_df_from_csv("sb.csv")
 # Generate cleaned df
 sbdf_clean = clean_df(sbdf)
 
-# Write cleaned df to local dir
+# Write cleaned df to local dir - for debugging
 write_df_to_csv(sbdf_clean, "sb_clean.csv")
 
 # Generate a df filled with vector embeddings (all numerical data, normalized where needed)
