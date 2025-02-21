@@ -9,7 +9,7 @@ def generate_explanation(vector_input, output):
     feature_importance_df = read_df_from_csv("feature_importance.csv")
     perm_feature_importance_df = read_df_from_csv("perm_feature_importance.csv")
     
-    feature_names = read_df_from_csv("sb_ve.csv").drop(columns=["Loan_ID", "Approval_Status", "zilliz_insertion_id"]).columns.tolist()
+    feature_names = read_df_from_csv("train_ve.csv").drop(columns=["Loan_ID", "Approval_Status", "zilliz_insertion_id"]).columns.tolist()
 
     completion = client.chat.completions.create(
         model="gpt-4o",

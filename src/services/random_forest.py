@@ -53,7 +53,7 @@ def get_model():
     # https://scikit-learn.org/stable/modules/permutation_importance.html#permutation-importance
     # Run feature-importance-analysis to try to understand which variables are high-impact
     # Save as dataframes so they can be quickly loaded
-    feature_names = read_df_from_csv("sb_ve.csv").drop(columns=["Loan_ID", "Approval_Status", "zilliz_insertion_id"]).columns.tolist()
+    feature_names = read_df_from_csv("train_ve.csv").drop(columns=["Loan_ID", "Approval_Status", "zilliz_insertion_id"]).columns.tolist()
     
     importances_path = os.path.join(script_dir, "..", "..", "csv_data", "feature_importance.csv")
     if not Path(importances_path).exists():

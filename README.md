@@ -18,8 +18,11 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
   * Make sure two collections are created, sbl_train, and sbl_val
   * Should be configured for 13 dimensions and use auto_id
   * Add an additional attribute "status" which is used to hold the loan acceptance var
+  * I looked into creating collections automatically if the ingestion program found them to not exist, but it didn't seem like the zilliz [collections/create API](https://docs.zilliz.com/reference/restful/create-collection) contained all the necessary parameters
+      * For instance, how do I add the "status" variable?
+      * How do I specify use of Auto Id?
 
-### ingest.py
+### Data Preprocessing & Embeddings - `src/scripts/ingest.py`
 * Run with `python3 -m src.scripts.ingest`
 * Pulls in a csv from the local `$project_dir/csv_data` directory
 * Performs some basic cleaning
@@ -90,9 +93,31 @@ This detailed insight helps convey accuracy and reliability in initial valuation
 ```
 
 ### API
-* Run the api with `fastapi dev main.py`
+* Run the api with `fastapi dev api.py`
 * Simple FastAPI setup with 3 routes
   * ping GET route for testing connectivity issues
   * similarity_retrieval POST route accepts a vector and returns its closest neighbor from the training data set in zilliz
   * risk_scoring POST route accepts a vector and returns a prediction of whether the application it represents would be accepted or denied, as well as a openAI generated explanation on that result, geared towards an internal team of reviewers.
 * Test requests are in the `src.scripts.test_api` file
+
+
+
+### Benchmarks
+* I did not hit many!
+* Model accuracy is around 64%
+  * Improvements could be found:
+    * In how I am creating my embeddings
+      * I am a bit skeptical of my current setup, which mixes one-hot int columns with z-score normalized floats
+    * In how I tune my grid search
+    * In using an entirely different model
+* Retrieval Speed for nearest-neighbor search usually between 0.25 and 0.5 seconds
+  * I think my program misses the point of this section a bit
+  * I figure I am supposed to figure out how to bake sorting of nearness into the zilliz query itself, instead of just fetching and sorting the response, just didn't have time
+* Explanation response is alright, think it could be a lot better if I gave it more information about each variable, the cleaning/normalization process it went through, and so on...
+* API Latency
+  * Similarity search is on average around 400ms
+    * Same improvements mentioned above for nearest-neighbors would shorten this
+  * Risk prediction (without explanation)
+    * This is fast, reliably around 0.1 seconds
+  * Risk prediction (with explanation)
+    * This is super slow, around 10s, didn't put much thought into optimizing openai response times but I imagine smarter and more succinct (low word count, high value) queries will take less time to process
