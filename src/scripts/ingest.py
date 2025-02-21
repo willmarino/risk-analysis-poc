@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ..services.zilliz import insert_embeddings
+from ..services.zilliz import insert_embeddings, describe_collection
 from ..services.df_util import read_df_from_csv, write_df_to_csv, gen_train_val_split, clean_df, gen_vector_embeddings
 
 # Read initial csv data
@@ -9,7 +9,7 @@ sbdf = read_df_from_csv("sb.csv")
 # Generate cleaned df
 sbdf_clean = clean_df(sbdf)
 
-# Write cleaned df to local dir
+# Write cleaned df to local dir - for debugging
 write_df_to_csv(sbdf_clean, "sb_clean.csv")
 
 # Generate a df filled with vector embeddings (all numerical data, normalized where needed)
@@ -18,11 +18,15 @@ df_ve = gen_vector_embeddings(sbdf_clean)
 # Separate prepared dataframe out into training and validation sets (will be helpful for sim search and building model)
 train_ve, val_ve = gen_train_val_split(df_ve)
 
+train_col_response = describe_collection("sbl_train")
+if len(train_col_response["message"]) > 0: # Could not find collection
+    raise Exception("Could not find sbl_train cluster, please create it following the instructions in README.md")
+
+val_col_response = describe_collection("sbl_val")
+if len(val_col_response["message"]) > 0: # Could not find collection
+    raise Exception("Could not find sbl_val cluster, please create it following the instructions in README.md")
+
 # Write embeddings in Zilliz, only include relevant data
-# Adding insertion_ids to dataframes
-# Doing this because we don't want to store approval status in zilliz,
-# but we will need to know which vector embeddings represent approvals or denials
-# in order to train a model to make predictions
 train_insertion_ids = insert_embeddings(
     "sbl_train",
     train_ve.drop(columns=["Loan_ID", "Approval_Status"]).values.tolist(),

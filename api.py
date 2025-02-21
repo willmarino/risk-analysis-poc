@@ -5,7 +5,7 @@ from typing import List
 
 from src.services.zilliz import single_vector_search
 from src.services.open_ai import generate_explanation
-from src.models.random_forest import rf
+from src.services.random_forest import get_model
 
 
 app = FastAPI()
@@ -40,8 +40,20 @@ def similarity_retrieval(vector_embedding: VectorEmbedding):
         "closest_vector": closest_vector
     }
 
+
 @app.post("/risk_scoring")
 def risk_scoring(vector_embedding: VectorEmbedding):
+    rf = get_model()
+    [prediction] = rf.predict([vector_embedding.vector])
+
+    return {
+        "predicted_status": "Approved" if prediction == 1 else "Denied"
+    }
+
+
+@app.post("/risk_scoring_explained")
+def risk_scoring(vector_embedding: VectorEmbedding):
+    rf = get_model()
     [prediction] = rf.predict([vector_embedding.vector])
     explanation = generate_explanation(vector_embedding.vector, prediction)
 

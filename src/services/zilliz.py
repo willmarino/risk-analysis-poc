@@ -15,7 +15,7 @@ load_dotenv(
 )
 
 def get_base_url():
-    return f"{os.getenv("ZILLIZ_CLUSTER_ENDPOINT")}/v2/vectordb/entities"
+    return f"{os.getenv("ZILLIZ_CLUSTER_ENDPOINT")}/v2/vectordb"
 
 def get_headers():
     return {
@@ -24,8 +24,34 @@ def get_headers():
         "Authorization": f"Bearer {os.getenv("ZILLIZ_BEARER_TOKEN")}",
     }
 
+def describe_collection(col_name):
+    print(f"Checking to see if collection exists on zilliz: {col_name}...")
+    url = f"{get_base_url()}/collections/describe"
+    payload = { "collectionName": col_name }
+
+    response = requests.post(
+        url,
+        data=json.dumps(payload),
+        headers=get_headers()
+    )
+
+    return response.json()
+
+
+# def create_collection(col_name):
+#     print(f"Creating new collection on zilliz: {col_name}...")
+#     url = f"{get_base_url()}/collections/create"
+#     payload = {
+#         "collection_name": col_name,
+#         "dimensions": 13,
+#         "metricType": "COSINE",
+#         "vectorField": "vector"
+#     }
+
+
 def insert_embeddings(col_name, embeddings, status):
-    url = f"{get_base_url()}/insert"
+    print(f"Inserting vector embeddings into zilliz: {col_name}...")
+    url = f"{get_base_url()}/entities/insert"
     
     formatted_embeddings = []
     for i in range(len(embeddings)):
@@ -47,7 +73,8 @@ def insert_embeddings(col_name, embeddings, status):
 
 
 def fetch_vectors(col_name, offset, limit):
-    url = f"{get_base_url()}/query"
+    print(f"Fetching vector embeddings from zilliz: {col_name}...")
+    url = f"{get_base_url()}/entities/query"
 
     payload = {
         "collectionName": col_name,
@@ -66,7 +93,8 @@ def fetch_vectors(col_name, offset, limit):
 
 
 def single_vector_search(col_name, v_e):
-    url = f"{get_base_url()}/search"
+    print(f"Running vector search on zilliz: {col_name}...")
+    url = f"{get_base_url()}/entities/search"
 
     payload = {
         "collectionName": col_name,
