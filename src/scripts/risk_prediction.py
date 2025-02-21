@@ -24,5 +24,6 @@ print(f"Accuracy score: {accuracy}")
 random_input = val_inputs.iloc[random_int]
 random_output = val_outputs[random_int]
 
-message = generate_explanation(rf, train_inputs, train_outputs, random_input, random_output)
+# message = generate_explanation(rf, train_inputs, train_outputs, random_input, random_output)
+message = generate_explanation(random_input, random_output)
 print(message)

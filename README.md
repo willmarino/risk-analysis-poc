@@ -41,24 +41,58 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 * At the moment, the explainability function is also called in this script - imported from `src/services/open_ai`, I included a sample of it below.
 
 ```
-To explain why certain variables in the given vector embedding might indicate an outcome of 1, we need to consider both the value of each component in the vector and the feature importance from the analyses. Let's go through the vector embedding components alongside their respective features and discuss their potential influence on the outcome:
+### Breakdown of the Vector Embedding
 
-1. **Annual_Revenue (-0.668507)**: This feature has high importance in both analyses, especially in the non-permutated one. A negative value here might suggest lower than average revenue, which could imply higher credit risk. However, since it's a critical feature, even this negative indicator might not heavily penalize the model's decision towards outcome 1 if other stronger indicators are positive.
+1. **Annual Revenue (1.243850):**
+   - **Non-Permutated Importance:** 0.174965
+   - **Permutated Importance:** 0.0715026
+   - **Interpretation:** This feature has the highest importance in non-permutated values, suggesting that annual revenue is a crucial indicator of loan outcome. A higher-than-average score of 1.243850 indicates strong revenue performance, which likely correlates positively with the outcome 1, marking potential loan approval or success.
 
-2. **Debt_To_Income_Ratio (0.138318)**: Similarly, this is a crucial feature. A positive but small value might indicate a balanced debt-to-income ratio, which could be favorable and support outcome 1.
+2. **Debt to Income Ratio (0.448373):**
+   - **Non-Permutated Importance:** 0.158463
+   - **Permutated Importance:** 0.0783679
+   - **Interpretation:** This feature is also significant, particularly in the permutated setup. A score of 0.448373 suggests a reasonable debt-to-income ratio, possibly implying financial stability and a good ability to manage existing debts, favoring outcome 1.
 
-3. **Credit_Score (-1.190694)**: The markedly negative value indicates a low credit score, generally an adverse indicator, but since the credit score's importance is slightly lower, the decision could be more influenced by other positive features.
+3. **Credit Score (0.047358):**
+   - **Non-Permutated Importance:** 0.161694
+   - **Permutated Importance:** 0.0686528
+   - **Interpretation:** The credit score's moderate importance suggests its role in predicting loan outcomes. A positive but low score here might point towards either an average credit score or other compensating financial factors being present (such as strong revenue).
 
-4. **Loan_Amount_Requested (-0.091713)**: High importance is given to this feature. A small negative value may suggest the requested amount is slightly below average or expected, potentially reducing risk.
+4. **Loan Amount Requested (0.972543):**
+   - **Non-Permutated Importance:** 0.168594
+   - **Permutated Importance:** 0.101425
+   - **Interpretation:** This feature shows high importance across both measures. The near-unit score (0.972543) indicates a higher loan request, which could be in line with the business's revenue capacity and need, contributing to a favorable loan decision.
 
-5. **Loan_Term_Months (-0.051200)**: This feature has less importance; a slightly negative value might indicate shorter loan terms, often seen as less risky.
+5. **Loan Term Months (1.382411):**
+   - **Non-Permutated Importance:** 0.0624246
+   - **Permutated Importance:** 0.0397668
+   - **Interpretation:** Although relatively less crucial, the longer loan term suggested by a high score might reflect comfort with extended repayment, aligning with stable financial prospects.
 
-6. **Interest_Rate (-1.256475)**: Another crucial feature, with a highly negative value, suggesting a higher-than-average interest rate. While higher rates typically imply higher risk, it might also show affordability based on lender's policies, especially since interest rate shows consistent importance.
+6. **Interest Rate (-0.084123):**
+   - **Non-Permutated Importance:** 0.15416
+   - **Permutated Importance:** 0.0626943
+   - **Interpretation:** Despite its negative value, the moderate importance suggests interest rate considerations are crucial. A lower score here could mean a favorable rate was negotiated, enhancing loan approval likelihood.
 
-7. **Past_Loan_Defaults (2.721151)**: This overwhelmingly positive value indicates a history of defaults, which is generally negative. However, its relative low importance means even significant deviation in this feature might be overshadowed by other strong positive indicators.
+7. **Past Loan Defaults (-0.564639):**
+   - **Non-Permutated Importance:** 0.0291383
+   - **Permutated Importance:** 0.00569948
+   - **Interpretation:** This feature’s negative impact and limited importance indicate past defaults, potential red flags. However, its low weight suggests strong performance elsewhere may mitigate this risk.
 
-8. to 12. **Business Category Indicators**: 
-   - Most are zeros except Retail (1.0), which aligns with the category having slightly higher importance among categorical variables. The implication is that being in Retail might be a positive indicator towards the outcome 1, potentially due to stability or profitability associated with this sector.
+### Business Category Indicators
 
-From this analysis, it's clear that while some features such as Past Loan Defaults and Credit Score present risk factors, the model likely prioritizes the combination of more impactful variables such as Loan Amount Requested, Annual Revenue, and Debt to Income Ratio. These features, along with the positive indicator of being in the Retail category, might offset negative values, collectively influencing the prediction towards an outcome of 1. The permutation impact shows these features retain importance, but minor variances in predicted impact could still sustain the predicted outcome based on positive offsets.
+For the business category features, a value of '1' under Business_Category_Food & Beverage suggests the entity operates in this sector, which you might consider during evaluation.
+
+### Interpretation
+
+The vector suggests significant positive attributes for the small business loan evaluation. Strong annual revenue, manageable debt ratios, and an appropriate loan request/term dynamic, potentially balanced by a lower interest rate, collectively enhance the business’ profile for a favorable loan outcome. While the credit score and past defaults may flag concerns, their mitigated importance implies overall financial robustness.
+
+This detailed insight helps convey accuracy and reliability in initial valuation assessments, aligning with practical business understanding and data-driven analysis.
 ```
+
+### API
+* Run the api with `fastapi dev main.py`
+* Simple FastAPI setup with 3 routes
+  * ping GET route for testing connectivity issues
+  * similarity_retrieval POST route accepts a vector and returns its closest neighbor from the training data set in zilliz
+  * risk_scoring POST route accepts a vector and returns a prediction of whether the application it represents would be accepted or denied, as well as a openAI generated explanation on that result, geared towards an internal team of reviewers.
+* Test requests are in the `src.scripts.test_api` file
