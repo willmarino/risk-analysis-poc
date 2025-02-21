@@ -3,7 +3,6 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 
 
 ## Setup
-* I assume the person reading this knows all of this, but I thought I would include it anyway
 * Make sure you are running a compatible version of python3, I am using `3.13.1`
 * Create a virtual environment `python3 -m venv $env_name`
 * Enter that virtual environment `source $env_name/bin/activate`
@@ -11,10 +10,10 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 * Make sure to set all the env variables laid out in the .env.example file
 * I have gitignored the sample data from this repo, so you will need to add it
   * Run `mkdir csv_data`
-  * Drop in the csv sample data as `csv_data/sb.csv`
-  * The code does store csv data in this folder as a sort of intermediate product, I found it helpful while debugging
-* Set up zilliz cloud, and make sure the cluster endpoint, auth token, and collection name are all set in a `.env.dev`file
-  * Collection creation and deletion must be done manually
+  * Drop in the csv sample data as `$project_dir/csv_data/sb.csv`
+  * The code often stores csv data in this folder as a sort of intermediate product, I found it helpful while debugging and referencing things like feature names
+* Set up zilliz cloud, and make sure the cluster endpoint, and auth token are set in a file named `.env.dev` in the project root
+  * Collection creation and dropping must be done manually
   * Make sure two collections are created, sbl_train, and sbl_val
   * Should be configured for 13 dimensions and use auto_id
   * Add an additional attribute "status" which is used to hold the loan acceptance var
@@ -24,7 +23,7 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 
 ### Data Preprocessing & Embeddings - `src/scripts/ingest.py`
 * Run with `python3 -m src.scripts.ingest`
-* Pulls in a csv from the local `$project_dir/csv_data` directory
+* Pulls in sample csv from `$project_dir/csv_data/sb.csv`
 * Performs some basic cleaning
 * Creates a basic vector embedding
   * I am using different techniques to handle different data types in my dataframe (column-by-column)
@@ -40,9 +39,8 @@ AI-Powered Loan Risk Analysis System (Proof of Concept)
 ### Risk Prediction & Explainability - `src/scripts/risk_prediction.py`
 * Run this with `python3 -m src.scripts.risk_prediction`
 * This will import a trained random forest model out of `src/models/random_forest`, and run predictions with it.
-  * Correctness hovers at around 60%, which isn't great
-* At the moment, the explainability function is also called in this script - imported from `src/services/open_ai`, I included a sample of it below.
-
+  * Correctness hovers at around 64%, which isn't great, I go over possible changes in the benchmarks section below
+* This is a sample of the openai generated input --> output explanation
 ```
 ### Breakdown of the Vector Embedding
 
@@ -117,7 +115,7 @@ This detailed insight helps convey accuracy and reliability in initial valuation
 * API Latency
   * Similarity search is on average around 400ms
     * Same improvements mentioned above for nearest-neighbors would shorten this
-  * Risk prediction (without explanation)
+  * Risk prediction (without openai explanation)
     * This is fast, reliably around 0.1 seconds
-  * Risk prediction (with explanation)
-    * This is super slow, around 10s, didn't put much thought into optimizing openai response times but I imagine smarter and more succinct (low word count, high value) queries will take less time to process
+  * Risk prediction (with openai explanation)
+    * This is super slow, around 10s, didn't put much thought into optimizing openai response times but I imagine smarter and more succinct (low word count, high word value) queries will take less time to process
